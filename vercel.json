@@ -1,5 +1,5 @@
 {
-  "buildCommand": "node site/build.js && node site/build-projects.js --strict && node site/build-agents.js && node site/version-assets.js",
+  "buildCommand": "node site/build.js && node site/build-projects.js --strict && node site/build-agents.js && node site/clean-urls.js && node site/version-assets.js",
   "outputDirectory": "site",
   "framework": null,
   "installCommand": "echo skip",
@@ -23,10 +23,6 @@
     {
       "src": "/",
       "dest": "/api/markdown?path=/"
-    },
-    {
-      "src": "/(index|about|catalog|glossary|prereqs|developer|contact|privacy|sponsors|projects|learning-paths|certifications)\\.html",
-      "dest": "/api/markdown?path=/$1.html"
     }
   ],
   "rewrites": [
@@ -37,6 +33,14 @@
     {
       "source": "/certification",
       "destination": "/api/certification"
+    },
+    {
+      "source": "/prereqs",
+      "destination": "/api/markdown?path=/prereqs"
+    },
+    {
+      "source": "/project",
+      "destination": "/project.html"
     },
     {
       "source": "/about",
@@ -196,7 +200,7 @@
       ]
     },
     {
-      "source": "/(glossary|catalog|certifications|certification|assessment|path|roadmap|about|developer|docs|contact|privacy)",
+      "source": "/(glossary|catalog|certifications|certification|assessment|path|prereqs|roadmap|about|developer|docs|contact|privacy|sponsors|projects|project|learning-paths)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -256,5 +260,34 @@
     "api/**/*.js": {
       "includeFiles": "{site/*.html,site/*-seo.json,site/agent-pages/*.md,generated/agent-content.json}"
     }
-  }
+  },
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/index",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/:page(about|catalog|glossary|prereqs|developer|contact|privacy|sponsors|projects|project|learning-paths|certifications|assessment).html",
+      "destination": "/:page",
+      "permanent": true
+    },
+    {
+      "source": "/project",
+      "missing": [
+        {
+          "type": "query",
+          "key": "id"
+        }
+      ],
+      "destination": "/projects",
+      "permanent": false
+    }
+  ]
 }

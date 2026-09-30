@@ -23,6 +23,14 @@ function createServer() {
   return http.createServer(async (req, res) => {
     try {
       const url = new URL(req.url, 'http://127.0.0.1');
+      for (const rule of config.redirects || []) {
+        const pattern = rule.source.replace(/:page\(([^)]+)\)/, '($1)').replace(/\.html$/, '\\.html');
+        const match = url.pathname.match(new RegExp('^' + pattern + '$'));
+        if (!match || (rule.missing || []).some(condition => url.searchParams.has(condition.key))) continue;
+        const destination = rule.destination.replace(':page', match[1] || '');
+        res.writeHead(rule.permanent ? 308 : 307, { Location: destination + url.search });
+        return res.end();
+      }
       for (const rule of config.headers) if (new RegExp('^' + rule.source + '$').test(url.pathname)) {
         for (const header of rule.headers) res.setHeader(header.key, header.value);
       }
