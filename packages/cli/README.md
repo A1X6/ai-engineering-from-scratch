@@ -15,7 +15,9 @@ node packages/cli/bin/aiefs.js schema
 Search and schema print JSON to stdout. Read prints the original Markdown, or a
 JSON object with metadata when `--json` is supplied. Errors print to stderr and
 exit nonzero. Requests time out after 15 seconds and are never silently retried.
-For a 429, wait for the reported Retry-After interval before retrying.
+Malformed JSON and non-JSON gateway errors include the HTTP status and endpoint.
+For a 429, wait for the reported Retry-After interval before retrying. If absent,
+use bounded backoff with jitter; do not retry in a tight loop.
 
 `--base-url https://your-preview.vercel.app` selects a preview deployment. HTTP
 is accepted only on loopback for local development. Credentials in URLs are rejected.

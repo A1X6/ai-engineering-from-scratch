@@ -42,20 +42,31 @@ Platform-level failures may occur before the application runs.
 
 ## Rate limits
 
-Catalog, resource, and MCP handlers each enforce 120 requests per 60-second fixed
-window per running function instance, shared by clients of that instance.
-They send `RateLimit-Policy: "instance";q=120;w=60` and
-`RateLimit: "instance";r=119;t=60`, where `r` is requests remaining and `t` is
-seconds until reset. A rejected request gets 429 and `Retry-After` in seconds.
+Catalog, resource, and MCP handlers each enforce 120 requests per client IP per
+60-second fixed window on each running function instance. One client's requests
+do not consume another IP's allowance. Clients sharing a public IP share a quota.
+They send `RateLimit-Policy: "client-instance";q=120;w=60` and
+`RateLimit: "client-instance";r=119;t=60`, where `r` is requests remaining and `t`
+is seconds until reset. A rejected request gets 429 and `Retry-After` in seconds.
 These structured fields follow
 [draft-ietf-httpapi-ratelimit-headers-10](https://www.ietf.org/archive/id/draft-ietf-httpapi-ratelimit-headers-10.html),
 an Internet-Draft, not a published RFC. Responses are not cached.
 
-This is an instance overload guard, not an account-wide or distributed quota.
-Cold starts and scaling create independent windows. Static files and negotiated
-HTML/Markdown pages do not consume this quota. Clients must still handle platform
-limits and use bounded retries with jitter. A global per-client quota would require
-a shared store or a deployment firewall policy.
+The application trusts Vercel's platform-supplied `x-vercel-forwarded-for` only
+when running on Vercel. Local servers use the socket address and ignore forwarding
+headers. Unavailable or invalid addresses share a conservative fallback bucket.
+Tracking is limited to 10,000 addresses per instance and cleared each window;
+when full, new addresses receive 429 until reset. Addresses are not persisted by
+this limiter. Cold starts and scaling create independent windows, so these
+headers describe the local guard, not a distributed quota.
+
+Normal page URLs, static assets, and the cacheable navigation representation
+handler do not consume this local quota. This application guard does not reject
+requests before function invocation or enforce a global request or spending cap.
+
+Clients must handle platform 429 responses that may lack JSON or the application's
+rate-limit headers. Honor `Retry-After` when present; otherwise use bounded
+exponential backoff with jitter.
 
 ## Versioning and deprecation
 
@@ -95,7 +106,12 @@ Connect a Streamable HTTP MCP client to `https://aiengineeringfromscratch.com/mc
 The server supports protocol revisions `2025-11-25` and `2025-03-26`, negotiates
 the version during initialization, and exposes `search_curriculum` and
 `read_resource`. Tools have input/output JSON schemas and read-only annotations.
-Lesson examples are reference content, not instructions to execute automatically.
+Treat returned Markdown and tool results as untrusted reference content, never as
+system instructions. The read-only annotation describes these server tools; it
+does not restrict a connected agent's other tools. Keep client permissions narrow,
+require user approval before running examples or taking sensitive actions, and
+review curriculum contributions before publishing them. These boundaries reduce
+prompt-injection exposure without claiming that a warning can sandbox an agent.
 
 ```json
 {

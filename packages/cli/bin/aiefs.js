@@ -67,11 +67,18 @@ async function main(argv, { stdout = process.stdout, fetcher = fetch } = {}) {
   } else if (args.length) throw new Error('schema takes no positional arguments.');
   const response = await fetcher(url, { headers: { Accept: 'application/json', 'User-Agent': `aiefs-cli/${version}` }, signal: AbortSignal.timeout(15000), redirect: 'error' });
   const type = response.headers.get('content-type') || '';
-  if (!/^application\/(?:problem\+)?json\b/.test(type)) throw new Error(`HTTP ${response.status}: expected JSON from ${url.pathname}.`);
-  const data = await response.json();
+  const retry = response.headers.get('retry-after') || '';
+  let retryHint = '';
+  if (/^\d+$/.test(retry)) retryHint = ` Retry after ${retry} seconds.`;
+  else if (Number.isFinite(Date.parse(retry))) retryHint = ` Retry after ${new Date(retry).toUTCString()}.`;
+  const context = `HTTP ${response.status} from ${url.pathname}`;
+  if (!/^application\/(?:problem\+)?json(?:\s*;|$)/i.test(type)) throw new Error(`${context}: expected JSON.${retryHint}`);
+  let data;
+  try { data = await response.json(); }
+  catch { throw new Error(`${context}: invalid JSON response.${retryHint}`); }
+  if (data === null || typeof data !== 'object' || Array.isArray(data)) throw new Error(`${context}: expected a JSON object.${retryHint}`);
   if (!response.ok) {
-    const retry = response.headers.get('retry-after');
-    throw new Error(`HTTP ${response.status} ${data.code || ''}: ${data.detail || data.title || 'Request failed'}${data.hint ? ' ' + data.hint : ''}${retry ? ` Retry after ${retry} seconds.` : ''}`);
+    throw new Error(`${context} ${data.code || ''}: ${data.detail || data.title || 'Request failed'}${data.hint ? ' ' + data.hint : ''}${retryHint}`);
   }
   if (command === 'read' && !options['--json']) {
     if (typeof data.markdown !== 'string') throw new Error('The API returned no Markdown content.');
