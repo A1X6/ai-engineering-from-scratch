@@ -66,12 +66,20 @@ def main() -> None:
     config = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))
     rewrites = config["rewrites"]
     markdown_rewrites = [r for r in rewrites if "has" in r and r["destination"] == "/llms.txt"]
-    negotiator_rewrites = [r for r in rewrites if r.get("destination", "").startswith("/api/markdown")]
-    assert negotiator_rewrites, "markdown negotiation rewrite is missing"
-    assert all("has" not in r for r in negotiator_rewrites), "missing Accept must default to HTML"
+    markdown_pages = [r for r in rewrites if r.get("destination", "").startswith("/agent-pages/")]
+    assert markdown_pages, "markdown page rewrites are missing"
+    assert not [r for r in rewrites if r.get("destination", "").startswith("/api/markdown")], "pages must stay static"
+    html_pages = {r["source"]: r["destination"] for r in rewrites if "has" not in r}
+    for rule in markdown_pages:
+        assert rule["has"] == [{"type": "header", "key": "accept", "value": "(?i).*text/markdown.*"}], rule["source"]
+        assert html_pages[rule["source"]].endswith(".html"), f"{rule['source']} must default to HTML"
+        assert (SITE / rule["destination"].lstrip("/")).is_file(), f"build did not publish {rule['destination']}"
+    functions = config["functions"]
+    assert all(value["maxDuration"] <= 10 for value in functions.values())
+    assert "api/**/*.js" not in functions, "functions bundle only the files they read"
     shadowed = [
         r["source"]
-        for r in negotiator_rewrites
+        for r in markdown_pages
         if any(
             candidate.is_file()
             for candidate in (SITE / r["source"].strip("/") / "index.html", SITE / r["source"].strip("/"))
@@ -97,8 +105,8 @@ def main() -> None:
         "dest": "/api/certification?legacy=1",
     }
     root_route = legacy_routes["/"]
-    assert root_route["dest"] == "/api/markdown?path=/"
-    assert "has" not in root_route, "all Accept values must reach negotiation, including explicit rejections"
+    assert root_route["dest"] == "/agent-pages/index.md"
+    assert root_route["has"] == markdown_pages[0]["has"], "only Markdown requests leave the static homepage"
 
     headers = config["headers"]
     llms_header = next(h for h in headers if h["source"] == "/llms.txt")

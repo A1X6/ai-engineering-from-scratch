@@ -550,19 +550,11 @@
               "X-API-Version": {
                 "$ref": "#/components/headers/ApiVersion"
               },
-              "RateLimit-Policy": {
-                "description": "Enforced per-client-IP fixed window on this function instance, using draft-ietf-httpapi-ratelimit-headers-10. Clients sharing an IP share the quota.",
+              "Cache-Control": {
+                "description": "public, max-age=300, s-maxage=86400. Content changes only on deploy.",
                 "schema": {
                   "type": "string"
-                },
-                "example": "\"client-instance\";q=120;w=60"
-              },
-              "RateLimit": {
-                "description": "Remaining requests for this client IP on this instance and seconds until reset. Cold starts and scaled instances have independent windows. Tracking capacity exhaustion also reports zero.",
-                "schema": {
-                  "type": "string"
-                },
-                "example": "\"client-instance\";r=119;t=60"
+                }
               }
             },
             "content": {
@@ -744,19 +736,11 @@
               "X-API-Version": {
                 "$ref": "#/components/headers/ApiVersion"
               },
-              "RateLimit-Policy": {
-                "description": "Enforced per-client-IP fixed window on this function instance, using draft-ietf-httpapi-ratelimit-headers-10. Clients sharing an IP share the quota.",
+              "Cache-Control": {
+                "description": "public, max-age=300, s-maxage=86400. Content changes only on deploy.",
                 "schema": {
                   "type": "string"
-                },
-                "example": "\"client-instance\";q=120;w=60"
-              },
-              "RateLimit": {
-                "description": "Remaining requests for this client IP on this instance and seconds until reset. Cold starts and scaled instances have independent windows. Tracking capacity exhaustion also reports zero.",
-                "schema": {
-                  "type": "string"
-                },
-                "example": "\"client-instance\";r=119;t=60"
+                }
               }
             }
           },
@@ -912,19 +896,11 @@
               "X-API-Version": {
                 "$ref": "#/components/headers/ApiVersion"
               },
-              "RateLimit-Policy": {
-                "description": "Enforced per-client-IP fixed window on this function instance, using draft-ietf-httpapi-ratelimit-headers-10. Clients sharing an IP share the quota.",
+              "Cache-Control": {
+                "description": "public, max-age=300, s-maxage=86400. Content changes only on deploy.",
                 "schema": {
                   "type": "string"
-                },
-                "example": "\"client-instance\";q=120;w=60"
-              },
-              "RateLimit": {
-                "description": "Remaining requests for this client IP on this instance and seconds until reset. Cold starts and scaled instances have independent windows. Tracking capacity exhaustion also reports zero.",
-                "schema": {
-                  "type": "string"
-                },
-                "example": "\"client-instance\";r=119;t=60"
+                }
               }
             },
             "content": {
@@ -1135,19 +1111,11 @@
               "X-API-Version": {
                 "$ref": "#/components/headers/ApiVersion"
               },
-              "RateLimit-Policy": {
-                "description": "Enforced per-client-IP fixed window on this function instance, using draft-ietf-httpapi-ratelimit-headers-10. Clients sharing an IP share the quota.",
+              "Cache-Control": {
+                "description": "public, max-age=300, s-maxage=86400. Content changes only on deploy.",
                 "schema": {
                   "type": "string"
-                },
-                "example": "\"client-instance\";q=120;w=60"
-              },
-              "RateLimit": {
-                "description": "Remaining requests for this client IP on this instance and seconds until reset. Cold starts and scaled instances have independent windows. Tracking capacity exhaustion also reports zero.",
-                "schema": {
-                  "type": "string"
-                },
-                "example": "\"client-instance\";r=119;t=60"
+                }
               }
             }
           },

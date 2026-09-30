@@ -8,7 +8,7 @@ const mcp = require('../api/mcp');
 
 async function invoke(handler, { method = 'GET', accept = 'application/json', query = {}, headers = {}, body, address = '192.0.2.1' } = {}) {
   const output = { headers: {}, body: '' };
-  const res = { statusCode: 200, setHeader(name, value) { output.headers[name.toLowerCase()] = value; }, end(value = '') { output.body = value; output.status = this.statusCode; } };
+  const res = { statusCode: 200, setHeader(name, value) { output.headers[name.toLowerCase()] = value; }, removeHeader(name) { delete output.headers[name.toLowerCase()]; }, end(value = '') { output.body = value; output.status = this.statusCode; } };
   await handler({ method, headers: { accept, ...headers }, query, body, socket: { remoteAddress: address } }, res);
   if (output.body && /json/.test(output.headers['content-type'])) output.json = JSON.parse(output.body);
   return output;
@@ -35,9 +35,13 @@ test('resource returns exact source without permitting traversal or URL fetching
 
 test('REST methods, Accept, query errors, HEAD, missing content, and service failures', async () => {
   for (const [handler, query] of [[catalog.createHandler(), { q: 'attention', limit: '2' }], [resource.createHandler(), { path: 'projects/dataset-split-auditor' }]]) {
-    const get = await invoke(handler, { query }); assert.equal(get.status, 200); assert.match(get.headers.ratelimit, /r=119/);
+    const get = await invoke(handler, { query }); assert.equal(get.status, 200);
+    assert.equal(get.headers['cache-control'], 'public, max-age=300, s-maxage=86400');
+    assert.equal(get.headers.ratelimit, undefined); assert.equal(get.headers['ratelimit-policy'], undefined);
     const head = await invoke(handler, { query, method: 'HEAD' }); assert.equal(head.status, 200); assert.equal(head.body, '');
-    assert.equal((await invoke(handler, { query, accept: 'text/html' })).status, 406);
+    assert.deepEqual(head.headers, get.headers);
+    const rejected = await invoke(handler, { query, accept: 'text/html' }); assert.equal(rejected.status, 406);
+    assert.equal(rejected.headers['cache-control'], 'no-store'); assert.match(rejected.headers.ratelimit, /r=\d+/);
     const post = await invoke(handler, { method: 'POST' }); assert.equal(post.status, 405); assert.equal(post.headers.allow, 'GET, HEAD');
   }
   for (const query of [{ limit: ['1','2'] }, { q: ['a','b'] }, { limit: '1.2' }, { offset: '-1' }, { kind: '__proto__' }, { other: 'x' }]) assert.equal((await invoke(catalog.createHandler(), { query })).status, 400);
@@ -49,13 +53,14 @@ test('REST methods, Accept, query errors, HEAD, missing content, and service fai
 
 test('quota headers reflect enforcement and reset with no cached or negative quotas', async () => {
   let time = 1000;
-  const handler = catalog.createHandler({ limit: createLimiter({ limit: 2, windowSeconds: 60, now: () => time, vercel: false }) });
-  const first = await invoke(handler); assert.equal(first.headers['ratelimit-policy'], '"client-instance";q=2;w=60');
+  const handler = mcp.createHandler({ limit: createLimiter({ limit: 2, windowSeconds: 60, now: () => time, vercel: false }) });
+  const message = { jsonrpc: '2.0', id: 1, method: 'ping' };
+  const first = await rpc(handler, message); assert.equal(first.headers['ratelimit-policy'], '"client-instance";q=2;w=60');
   assert.equal(first.headers.ratelimit, '"client-instance";r=1;t=60');
-  await invoke(handler); time += 1500;
-  const blocked = await invoke(handler); assert.equal(blocked.status, 429); assert.equal(blocked.headers['retry-after'], '59');
+  await rpc(handler, message); time += 1500;
+  const blocked = await rpc(handler, message); assert.equal(blocked.status, 429); assert.equal(blocked.headers['retry-after'], '59');
   assert.equal(blocked.headers.ratelimit, '"client-instance";r=0;t=59'); assert.equal(blocked.json.status, 429); assert.equal(blocked.headers['cache-control'], 'no-store');
-  time = 61000; assert.equal((await invoke(handler)).status, 200);
+  time = 61000; assert.equal((await rpc(handler, message)).status, 200);
 });
 
 test('local clients have independent quotas and cannot rotate forwarding headers to bypass them', async () => {

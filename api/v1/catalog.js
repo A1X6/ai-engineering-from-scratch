@@ -1,5 +1,5 @@
 const { search, InputError } = require('../../lib/agent-content');
-const { quality, send, problem, apiHeaders, createLimiter } = require('../../lib/agent-http');
+const { quality, send, problem, apiHeaders, cacheable, createLimiter } = require('../../lib/agent-http');
 
 function createHandler({ queryCatalog = search, limit = createLimiter() } = {}) {
   return (req, res) => {
@@ -18,7 +18,9 @@ function createHandler({ queryCatalog = search, limit = createLimiter() } = {}) 
           args[key] = Number(args[key]);
         }
       }
-      send(req, res, 200, 'application/json', JSON.stringify(queryCatalog(args)) + '\n');
+      const body = JSON.stringify(queryCatalog(args)) + '\n';
+      cacheable(res);
+      send(req, res, 200, 'application/json', body);
     } catch (error) {
       if (error instanceof InputError) return problem(req, res, 400, 'invalid_parameter', error.message);
       problem(req, res, 503, 'content_unavailable', 'The curriculum catalog is temporarily unavailable.', 'Retry later or use the linked GitHub source from /docs.');

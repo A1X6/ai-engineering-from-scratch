@@ -19,6 +19,14 @@ function queryObject(params) {
   return result;
 }
 
+function matches(rule, req) {
+  return (rule.has || []).every(condition => {
+    const insensitive = condition.value.startsWith('(?i)');
+    const pattern = new RegExp(insensitive ? condition.value.slice(4) : condition.value, insensitive ? 'i' : '');
+    return condition.type === 'header' && pattern.test(req.headers[condition.key] || '');
+  });
+}
+
 function createServer() {
   return http.createServer(async (req, res) => {
     try {
@@ -38,7 +46,7 @@ function createServer() {
       let routed = false;
       for (const rule of config.routes) {
         const match = url.pathname.match(new RegExp('^' + rule.src + '$'));
-        if (match && (!rule.methods || rule.methods.includes(req.method))) {
+        if (match && (!rule.methods || rule.methods.includes(req.method)) && matches(rule, req)) {
           destination = rule.dest.replace(/\$(\d+)/g, (_, n) => match[Number(n)]);
           routed = true;
           break;
@@ -48,17 +56,20 @@ function createServer() {
         const filename = path.resolve(SITE, '.' + name);
         return filename.startsWith(SITE + path.sep) && fs.existsSync(filename) && fs.statSync(filename).isFile();
       };
+      if (!routed && destination === '/') destination = '/index.html';
       if (!routed && !handlers[destination] && !isFile(destination)) {
-        const rule = config.rewrites.find(rule => rule.source === url.pathname
-          || (rule.source === '/api/:missing*' && url.pathname.startsWith('/api/'))
-          || rule.source === '/:missing*');
+        const rule = config.rewrites.find(rule => (rule.source === url.pathname && matches(rule, req))
+          || (rule.source === '/api/:missing*' && url.pathname.startsWith('/api/')));
         if (rule) destination = rule.destination;
       }
       const target = new URL(destination, 'http://127.0.0.1');
       for (const [key, value] of target.searchParams) url.searchParams.append(key, value);
       req.query = queryObject(url.searchParams);
       if (handlers[target.pathname]) return await handlers[target.pathname](req, res);
-      if (!isFile(target.pathname)) return handlers['/api/not-found'](req, res);
+      if (!isFile(target.pathname)) {
+        res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+        return res.end(req.method === 'HEAD' ? undefined : fs.readFileSync(path.join(SITE, '404.html')));
+      }
       const type = ({'.html':'text/html','.js':'application/javascript','.css':'text/css','.json':'application/json','.md':'text/markdown','.txt':'text/markdown','.xml':'application/xml','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp','.woff2':'font/woff2'})[path.extname(target.pathname)] || 'application/octet-stream';
       res.setHeader('Content-Type', type);
       if (req.method === 'HEAD') return res.end();

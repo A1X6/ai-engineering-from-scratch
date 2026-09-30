@@ -45,12 +45,18 @@ Platform-level failures may occur before the application runs.
 Catalog, resource, and MCP handlers each enforce 120 requests per client IP per
 60-second fixed window on each running function instance. One client's requests
 do not consume another IP's allowance. Clients sharing a public IP share a quota.
-They send `RateLimit-Policy: "client-instance";q=120;w=60` and
+Uncached responses send `RateLimit-Policy: "client-instance";q=120;w=60` and
 `RateLimit: "client-instance";r=119;t=60`, where `r` is requests remaining and `t`
 is seconds until reset. A rejected request gets 429 and `Retry-After` in seconds.
 These structured fields follow
 [draft-ietf-httpapi-ratelimit-headers-10](https://www.ietf.org/archive/id/draft-ietf-httpapi-ratelimit-headers-10.html),
-an Internet-Draft, not a published RFC. Responses are not cached.
+an Internet-Draft, not a published RFC.
+
+Successful catalog and resource responses are public and cacheable
+(`Cache-Control: public, max-age=300, s-maxage=86400`). The CDN can answer a repeated
+request without running the function, so these responses omit the per-instance
+`RateLimit` fields. Content changes only when the site deploys, and each deploy
+clears the CDN cache. Errors and MCP responses are not cached.
 
 The application trusts Vercel's platform-supplied `x-vercel-forwarded-for` only
 when running on Vercel. Local servers use the socket address and ignore forwarding
@@ -82,20 +88,21 @@ redirects or promise that individual lesson content remains unchanged.
 
 ## Markdown and recovery
 
-The homepage and public navigation pages support `Accept: text/markdown`, including
-their `.html` URLs. HTML remains the default for browsers and wildcard Accept.
-Explicit media-type quality values and `q=0` are respected. Responses send
-`Vary: Accept, Accept-Encoding`. Unsupported representations return 406.
+The homepage and public navigation pages return Markdown when the `Accept` header
+names `text/markdown`, including their `.html` URLs. HTML remains the default for
+browsers and wildcard Accept. Both representations are static files served from
+the CDN, and responses send `Vary: Accept, Accept-Encoding`. For full quality-value
+negotiation, including 406 for rejected types, use `/api/v1/markdown?path=/docs`.
 Lesson source is available through `/api/v1/resource`; the lesson reader and
 certification routes retain their HTML rendering and canonical redirects.
 
 ```bash
 curl -H 'Accept: text/markdown' https://aiengineeringfromscratch.com/docs
-curl -i -H 'Accept: text/markdown' https://aiengineeringfromscratch.com/missing-page
+curl -i -H 'Accept: text/markdown' https://aiengineeringfromscratch.com/api/v1/markdown?path=/missing-page
 ```
 
-Missing pages return a real 404 with short Markdown recovery links for agents and
-the existing HTML recovery page for browsers. Start at the
+Missing pages return a real 404: the HTML recovery page for browsers, and short
+Markdown recovery links from `/api/v1/markdown`. Start at the
 [curriculum index](https://aiengineeringfromscratch.com/llms.txt),
 [sitemap](https://aiengineeringfromscratch.com/sitemap.xml), or
 [API docs](https://aiengineeringfromscratch.com/docs).

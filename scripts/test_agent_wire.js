@@ -16,11 +16,10 @@ test('served routing preserves HTML, negotiates every navigation page, and recov
     assert.equal(await html.text(), fs.readFileSync(path.join(__dirname, '../site', filename), 'utf8'), route);
     const markdown = await fetch(base + route, { headers: { Accept: 'text/markdown' } }); assert.equal(markdown.status, 200, route); assert.match(markdown.headers.get('content-type'), /text\/markdown/, route); assert.match(markdown.headers.get('vary'), /Accept/);
     const body = await markdown.text(); assert.ok(body.length > 200, route); assert.doesNotMatch(body, /<script|<!DOCTYPE/i, route);
-    const rejected = await fetch(base + route, { headers: { Accept: 'text/html;q=0,text/markdown;q=0' } }); assert.equal(rejected.status, 406, route);
     const head = await fetch(base + route, { method: 'HEAD', headers: { Accept: 'text/markdown' } }); assert.equal(head.status, 200); assert.equal(await head.text(), '');
   }
   for (const route of ['/missing-73ee','/nested/missing.html']) {
-    const response = await fetch(base + route, { headers: { Accept: 'text/markdown' } }); assert.equal(response.status, 404); assert.match(response.headers.get('content-type'), /text\/markdown/); assert.match(await response.text(), /sitemap/);
+    const response = await fetch(base + route, { headers: { Accept: 'text/markdown' } }); assert.equal(response.status, 404); assert.match(await response.text(), /sitemap/);
     const html = await fetch(base + route); assert.equal(html.status, 404); assert.match(html.headers.get('content-type'), /text\/html/);
   }
   for (const accept of ['*/*','text/html','application/json']) {

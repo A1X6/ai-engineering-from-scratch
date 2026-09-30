@@ -1,5 +1,5 @@
 const { readResource, InputError } = require('../../lib/agent-content');
-const { quality, send, problem, apiHeaders, createLimiter } = require('../../lib/agent-http');
+const { quality, send, problem, apiHeaders, cacheable, createLimiter } = require('../../lib/agent-http');
 
 function createHandler({ read = readResource, limit = createLimiter() } = {}) {
   return (req, res) => {
@@ -14,6 +14,7 @@ function createHandler({ read = readResource, limit = createLimiter() } = {}) {
       if (Object.keys(req.query || {}).some(key => key !== 'path')) throw new InputError('Only the path query parameter is supported.');
       const entry = read(req.query?.path);
       if (!entry) return problem(req, res, 404, 'resource_not_found', 'No published resource matches this path.', 'Search /api/v1/catalog and use a returned path.');
+      cacheable(res);
       send(req, res, 200, 'application/json', JSON.stringify(entry) + '\n');
     } catch (error) {
       if (error instanceof InputError) return problem(req, res, 400, 'invalid_parameter', error.message);
