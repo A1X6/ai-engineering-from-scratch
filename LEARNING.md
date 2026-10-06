@@ -11,6 +11,11 @@ Build goal: not sure yet. I'll decide as I learn.
 - Score: 0/10 (Math & Statistics 0/2, Classical ML 0/2, Deep Learning 0/2, NLP & Transformers 0/2, Applied AI 0/2)
 - Entry point: Phase 0: Setup & Tooling (learner chose to start here and skip nothing)
 - Pace: ~5/week
+- Machines: Mac (Apple Silicon) and Windows; no NVIDIA GPU known
+
+## Teaching preferences
+- Teach EVERY section of each lesson: all setup/install steps on the learner's own machines (Mac + Windows), every code section, Use It, Ship It, and all exercises. Never summarize sections away.
+- Give the website link for each lesson so the learner can cross-check.
 
 ## Path
 | Phase | Name | Status | Est. hours |
@@ -40,7 +45,7 @@ Build goal: not sure yet. I'll decide as I learn.
 ## Progress log
 | Date | Lesson | Quiz | Note |
 |------|--------|------|------|
-| 2026-10-06 | 00/01-dev-environment | 2/3 | Got the 4-layer stack, PATH and venv isolation right; mixed up torch.__version__ (installed) with torch.cuda.is_available() (GPU usable). |
+| 2026-10-06 | 00/01-dev-environment | 2/3 | Concepts only (incomplete): install steps, Ship It and exercises still to do on Mac + Windows. Mixed up torch.__version__ with torch.cuda.is_available(); got it right in the next warm-up. |
 
 ## Review queue
 - 00/01-dev-environment: checking GPU access (`torch.cuda.is_available()` / `torch.backends.mps.is_available()`) vs. checking the install (`torch.__version__`).
