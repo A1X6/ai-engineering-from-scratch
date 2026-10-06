@@ -46,6 +46,7 @@ Build goal: not sure yet. I'll decide as I learn.
 | Date | Lesson | Quiz | Note |
 |------|--------|------|------|
 | 2026-10-06 | 00/01-dev-environment | 2/3 | Concepts only (incomplete): install steps, Ship It and exercises still to do on Mac + Windows. Mixed up torch.__version__ with torch.cuda.is_available(); got it right in the next warm-up. |
+| 2026-10-06 | 00/02-git-and-collaboration | 2/3 | Read on own (only Part 1 taught). Missed the add -> commit -> push order. Exercises (fork, clone, branch, .gitignore, git log) still to do on own machine. |
 
 ## Review queue
-- 00/01-dev-environment: checking GPU access (`torch.cuda.is_available()` / `torch.backends.mps.is_available()`) vs. checking the install (`torch.__version__`).
+- 00/02-git-and-collaboration: the save order is git add -> git commit -> git push (push always last).
