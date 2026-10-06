@@ -40,5 +40,7 @@ Build goal: not sure yet. I'll decide as I learn.
 ## Progress log
 | Date | Lesson | Quiz | Note |
 |------|--------|------|------|
+| 2026-10-06 | 00/01-dev-environment | 2/3 | Got the 4-layer stack, PATH and venv isolation right; mixed up torch.__version__ (installed) with torch.cuda.is_available() (GPU usable). |
 
 ## Review queue
+- 00/01-dev-environment: checking GPU access (`torch.cuda.is_available()` / `torch.backends.mps.is_available()`) vs. checking the install (`torch.__version__`).
