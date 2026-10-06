@@ -9,13 +9,13 @@ Build goal: not sure yet. I'll decide as I learn.
 ## Placement
 - Date: 2026-10-06
 - Score: 0/10 (Math & Statistics 0/2, Classical ML 0/2, Deep Learning 0/2, NLP & Transformers 0/2, Applied AI 0/2)
-- Entry point: Phase 1: Math Foundations
+- Entry point: Phase 0: Setup & Tooling (learner chose to start here and skip nothing)
 - Pace: ~5/week
 
 ## Path
 | Phase | Name | Status | Est. hours |
 |-------|------|--------|------------|
-| 0 | Setup & Tooling | Skip | -- |
+| 0 | Setup & Tooling | Do | 14 |
 | 1 | Math Foundations | Do | 23 |
 | 2 | ML Fundamentals | Do | 21 |
 | 3 | Deep Learning Core | Do | 15 |
@@ -35,7 +35,7 @@ Build goal: not sure yet. I'll decide as I learn.
 | 17 | Infrastructure & Production | Do | 32 |
 | 18 | Ethics, Safety & Alignment | Do | 31 |
 | 19 | Capstone Projects | Do | 620 |
-| | **Total** | | **1114** |
+| | **Total** | | **1128** |
 
 ## Progress log
 | Date | Lesson | Quiz | Note |
